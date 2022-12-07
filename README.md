@@ -12,7 +12,7 @@
 - [x] Deve ser possível deletar uma conta;
 - [x] Deve ser possível retornar o balanço;
 
-### Regras de negócio
+### Regras de Negócio
 
 - [x] Não deve ser possível cadastrar uma conta com CPF já existente;
 - [x] Não deve ser possível fazer depósito em uma conta não existente;
