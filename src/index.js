@@ -1,25 +1,16 @@
 const express = require('express');
-
-//Versão do uuid gera números aleatórios;
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 
-//Middleware (Para receber um JSON);
 app.use(express.json());
 
-//Simulando um "banco de dados" com array para guardar as informações;
 const customers = [];
 
-//Middleware (Função Intermediária);
 function verifyIfExistsAccountCPF(request, response, next) {
-    //Antigo: '/statement/cpf:' e 'request.params';
     const { cpf } = request.headers;
-
-    //Usamos find para retornar o objeto, ao contrário do some que retorna "true" ou "false";
     const customer = customers.find(customer => customer.cpf === cpf);
     
-    //Validando a conta;
     if (!customer) {
         return response.status(400).json({error: "Customer not found!"});
     };
@@ -30,23 +21,20 @@ function verifyIfExistsAccountCPF(request, response, next) {
 };
 
 function getBalance(statement) {
-    //"REDUCE" para pegar as informações de um valor e transformar todos esses valores em um;
     const balance = statement.reduce((accumulator, operation) => {
         if (operation.type === 'credit') {
             return accumulator + operation.amount;
         } else {
             return accumulator - operation.amount;
         }
-    }, 0); //Valor de inicialização do "reduce";
+    }, 0);
 
     return balance;
 };
 
-//Criando o Cadastro;
 app.post("/account", (request, response) => {
     const { cpf, name } = request.body;
-
-    //Verificando se ja existe um cpf;
+    
     const customersAlreadyExists = customers.some(
         (customer) => customer.cpf === cpf
     );
@@ -65,15 +53,11 @@ app.post("/account", (request, response) => {
     return response.status(201).send();
 });
 
-//app.use(verifyIfExistsAccountCPF)
-
-//Buscando Extrato do Cliente;
-app.get("/statement", verifyIfExistsAccountCPF, (request, response) => {//Usando o Middleware;
+app.get("/statement", verifyIfExistsAccountCPF, (request, response) => {
     const { customer } = request;
     return response.json(customer.statement);
 });
 
-//Criando Depósito;
 app.post("/deposit", verifyIfExistsAccountCPF, (request, response) => {
     const { description, amount } = request.body;
     const { customer } = request;
@@ -90,13 +74,11 @@ app.post("/deposit", verifyIfExistsAccountCPF, (request, response) => {
     return response.status(201).send();
 });
 
-//Criando Saque;
 app.post("/withdraw", verifyIfExistsAccountCPF, (request, response) => {
     const { amount } = request.body;
     const { customer } = request;
     const balance = getBalance(customer.statement);
 
-    //Verificar se pode fazer a operação se saque;
     if (balance < amount) {
         return response.status(400).json({error: 'Insuficient Money!'});
     }
@@ -112,7 +94,6 @@ app.post("/withdraw", verifyIfExistsAccountCPF, (request, response) => {
     return response.status(201).send();
 });
 
-//Buscar_Listar Extrato Bancário por Data;
 app.get("/statement/date", verifyIfExistsAccountCPF, (request, response) => {
     const { customer } = request;
     const { date } = request.query;
@@ -142,8 +123,7 @@ app.get("/account", verifyIfExistsAccountCPF, (request, response) => {
 
 app.delete("/account", verifyIfExistsAccountCPF, (request, response) => {
     const { customer } = request;
-
-    //Usando Splice para deleção;
+    
     customers.splice(customer, 1);
 
     return response.status(200).json(customers);
